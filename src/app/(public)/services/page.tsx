@@ -1,17 +1,17 @@
 // import Header from "../../components/Header";
 // import Footer from "../../components/Footer";
-// import About from "../../components/About";
+// import Services from "../../components/Services";
 
 // export const metadata = {
-//   title: "About Flora Skincare",
+//   title: "Services - Flora Skincare",
 // };
 
-// export default function AboutPage() {
+// export default function ServicesPage() {
 //   return (
 //     <>
 //       <Header />
 //       <main>
-//         <About />
+//         <Services />
 //       </main>
 //       <Footer />
 //     </>

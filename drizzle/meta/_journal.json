@@ -15,6 +15,20 @@
       "when": 1769885993222,
       "tag": "0001_cynical_rocket_racer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771318235103,
+      "tag": "0002_sharp_sally_floyd",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771334960278,
+      "tag": "0003_absent_sharon_carter",
+      "breakpoints": true
     }
   ]
 }

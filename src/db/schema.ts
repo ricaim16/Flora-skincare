@@ -46,7 +46,7 @@ export const services = pgTable(
 
     durationMinutes: integer("duration_minutes")
       .notNull()
-      .default(60),
+      .default(90),
 
     priceInCents: integer("price_in_cents").notNull(),
 
@@ -187,4 +187,46 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
     fields: [bookings.serviceId],
     references: [services.id],
   }),
+}));
+
+
+
+
+
+/* ──────────────────────────────────────────────
+   CONTACTS
+────────────────────────────────────────────── */
+
+export const contacts = pgTable(
+  "contacts",
+  {
+    id: serial("id").primaryKey(),
+
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    phoneNumber: text("phone_number"),
+    message: text("message").notNull(),
+
+    isRead: boolean("is_read").notNull().default(false),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    emailIdx: index("contacts_email_idx").on(t.email),
+    readIdx: index("contacts_read_idx").on(t.isRead),
+  })
+);
+
+/* ──────────────────────────────────────────────
+   RELATIONS (if needed)
+────────────────────────────────────────────── */
+
+// Optional: If you later want to relate contacts to admins who reply
+export const contactsRelations = relations(contacts, ({ one }) => ({
+  // For example, assignedAdmin: one(admins, { fields: [contacts.assignedAdminId], references: [admins.id] })
 }));

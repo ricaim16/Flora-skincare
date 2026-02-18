@@ -1,0 +1,18 @@
+// src/components/ui/Label.tsx
+import { cn } from "../../../lib/utils";
+import { forwardRef, LabelHTMLAttributes } from "react";
+
+export const Label = forwardRef<
+  HTMLLabelElement,
+  LabelHTMLAttributes<HTMLLabelElement>
+>(({ className, ...props }, ref) => (
+  <label
+    ref={ref}
+    className={cn(
+      "block text-sm font-medium text-gray-700",
+      className
+    )}
+    {...props}
+  />
+));
+Label.displayName = "Label";
