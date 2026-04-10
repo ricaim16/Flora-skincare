@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "../../../lib/utils";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary";
   size?: "sm" | "md" | "lg";
-  href?: string; // optional href for links
-  children: React.ReactNode;
+  href?: string;
+  children: ReactNode;
 }
 
 export const Button = ({
@@ -15,17 +16,22 @@ export const Button = ({
   size = "md",
   href,
   children,
+  className,
   ...props
 }: ButtonProps) => {
   const classes = cn(
-    "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60",
-    size === "sm" ? "px-3 py-1.5 text-sm" : size === "md" ? "px-4 py-2.5 text-md" : "px-6 py-3 text-lg",
+    "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60",
+    size === "sm"
+      ? "px-4 py-2 text-sm"
+      : size === "md"
+        ? "px-5 py-3 text-sm"
+        : "px-7 py-3.5 text-base",
     variant === "primary"
-      ? "bg-purple-600 text-white hover:bg-purple-700"
-      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+      ? "bg-gradient-to-r from-purple-700 via-fuchsia-600 to-purple-500 text-white shadow-[0_18px_34px_rgba(117,57,187,0.24)] hover:-translate-y-0.5 hover:shadow-[0_24px_40px_rgba(117,57,187,0.3)]"
+      : "border border-purple-200 bg-white/80 text-purple-900 shadow-[0_16px_30px_rgba(95,52,155,0.08)] backdrop-blur hover:-translate-y-0.5 hover:border-purple-300 hover:bg-white",
+    className,
   );
 
-  // If href is passed, render as a link
   if (href) {
     return (
       <Link href={href} className={classes}>
