@@ -18,6 +18,7 @@ export default function Services() {
   const [services, setServices] = useState<Service[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -25,9 +26,17 @@ export default function Services() {
       try {
         const res = await fetch("/api/services");
         const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to fetch services");
+        }
+
         setServices(data.services || []);
       } catch (error) {
-        console.error("Failed to fetch services");
+        const message =
+          error instanceof Error ? error.message : "Failed to fetch services";
+        console.error("Failed to fetch services:", message);
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -47,7 +56,9 @@ export default function Services() {
   if (!services.length) {
     return (
       <section id="services" className="py-20 md:py-28 bg-gray-50 scroll-mt-24 text-center">
-        <p className="text-purple-900 text-xl">No services available at the moment.</p>
+        <p className="text-purple-900 text-xl">
+          {error || "No services available at the moment."}
+        </p>
       </section>
     );
   }

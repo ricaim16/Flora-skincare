@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "../../../db/db";
+import { db, hasDatabase } from "../../../db/db";
 import { contacts } from "../../../db/schema";
 import nodemailer from "nodemailer";
 
 // POST handler
 export async function POST(req: NextRequest) {
   try {
+    if (!hasDatabase || !db) {
+      return NextResponse.json(
+        {
+          error:
+            "Contact form submissions are unavailable until the database is configured with NEON_DB_URL.",
+        },
+        { status: 503 }
+      );
+    }
+
     // Parse JSON body
     const body = await req.json();
     const { name, email, phoneNumber, message } = body;

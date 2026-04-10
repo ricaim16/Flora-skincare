@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
-import { db } from "../../../../db/db";
+import { db, hasDatabase } from "../../../../db/db";
 import { admins } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 
 export async function GET(req: Request) {
   try {
+    if (!hasDatabase || !db) {
+      return NextResponse.json(
+        { error: "Database is not configured. Add NEON_DB_URL first." },
+        { status: 503 }
+      );
+    }
+
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

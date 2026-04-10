@@ -15,6 +15,7 @@ export default function BookingForm() {
   const [loadingServices, setLoadingServices] = useState(true);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [servicesError, setServicesError] = useState<string | null>(null);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -32,9 +33,17 @@ export default function BookingForm() {
       try {
         const res = await fetch("/api/services");
         const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to fetch services");
+        }
+
         setServices(data.services || []);
       } catch (error) {
-        console.error("Failed to fetch services");
+        const message =
+          error instanceof Error ? error.message : "Failed to fetch services";
+        console.error("Failed to fetch services:", message);
+        setServicesError(message);
       } finally {
         setLoadingServices(false);
       }
@@ -91,6 +100,12 @@ export default function BookingForm() {
       {message && (
         <div className="mb-6 p-4 rounded bg-gray-100 text-center text-sm">
           {message}
+        </div>
+      )}
+
+      {servicesError && (
+        <div className="mb-6 rounded bg-red-50 p-4 text-center text-sm text-red-700">
+          {servicesError}
         </div>
       )}
 

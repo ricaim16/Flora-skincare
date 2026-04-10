@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { db } from "../../../db/db";
+import { db, hasDatabase } from "../../../db/db";
 import { services } from "../../../db/schema";
 import { eq } from "drizzle-orm";
+import { fallbackServices } from "../../../lib/services";
 
 /* ──────────────────────────────────────────────
    GET /api/services
@@ -10,6 +11,15 @@ import { eq } from "drizzle-orm";
 ────────────────────────────────────────────── */
 export async function GET() {
   try {
+    if (!hasDatabase || !db) {
+      return NextResponse.json({
+        services: fallbackServices,
+        source: "fallback",
+        message:
+          "Database is not configured. Add NEON_DB_URL to use live services.",
+      });
+    }
+
     const activeServices = await db
       .select({
         id: services.id,
@@ -46,6 +56,13 @@ type CreateServiceBody = {
 
 export async function POST(req: Request) {
   try {
+    if (!hasDatabase || !db) {
+      return NextResponse.json(
+        { error: "Database is not configured. Add NEON_DB_URL first." },
+        { status: 503 }
+      );
+    }
+
     const body = (await req.json()) as CreateServiceBody;
 
     // Validate required fields

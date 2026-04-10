@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "../../../../db/db";
+import { db, hasDatabase } from "../../../../db/db";
 import { services } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
 
@@ -13,6 +13,13 @@ export async function PATCH(
   { params }: { params: { id: string } } // Next.js passes route params
 ) {
   try {
+    if (!hasDatabase || !db) {
+      return NextResponse.json(
+        { error: "Database is not configured. Add NEON_DB_URL first." },
+        { status: 503 }
+      );
+    }
+
     const serviceId = Number(params.id); // convert string to number
     const { isActive } = await req.json(); // read from request body
 

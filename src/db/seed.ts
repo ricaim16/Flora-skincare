@@ -1,8 +1,12 @@
-import { db } from "./db";
+import { db, hasDatabase } from "./db";
 import { services } from "./schema";
 
 async function seed() {
   try {
+    if (!hasDatabase || !db) {
+      throw new Error("NEON_DB_URL environment variable is not set.");
+    }
+
     await db.insert(services).values([
       { name: "Facial Glow", slug: "facial-glow", durationMinutes: 60, priceInCents: 120000, isActive: true },
       { name: "Deep Cleansing", slug: "deep-cleansing", durationMinutes: 75, priceInCents: 150000, isActive: true },

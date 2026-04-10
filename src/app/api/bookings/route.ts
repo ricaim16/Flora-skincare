@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "../../../db/db";
+import { db, hasDatabase } from "../../../db/db";
 import { bookings, services } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 
@@ -14,6 +14,16 @@ type CreateBookingBody = {
 
 export async function POST(req: Request) {
   try {
+    if (!hasDatabase || !db) {
+      return NextResponse.json(
+        {
+          error:
+            "Bookings are unavailable until the database is configured with NEON_DB_URL.",
+        },
+        { status: 503 }
+      );
+    }
+
     const body = (await req.json()) as CreateBookingBody;
 
     // Validate input

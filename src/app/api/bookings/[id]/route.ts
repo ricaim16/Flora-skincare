@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "../../../../db/db";
+import { db, hasDatabase } from "../../../../db/db";
 import { bookings } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
 
@@ -9,6 +9,13 @@ type UpdateBookingBody = {
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
+    if (!hasDatabase || !db) {
+      return NextResponse.json(
+        { error: "Database is not configured. Add NEON_DB_URL first." },
+        { status: 503 }
+      );
+    }
+
     const bookingId = Number(params.id);
     const { status } = (await req.json()) as UpdateBookingBody;
 

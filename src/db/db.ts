@@ -5,15 +5,17 @@ import dotenv from "dotenv";
 
 dotenv.config(); // Load .env variables
 
-if (!process.env.NEON_DB_URL) {
-  throw new Error("NEON_DB_URL environment variable is not set.");
-}
+const databaseUrl = process.env.NEON_DB_URL?.trim();
 
-const pool = new Pool({
-  connectionString: process.env.NEON_DB_URL,
-  ssl: {
-    rejectUnauthorized: true, // required for Neon
-  },
-});
+export const hasDatabase = Boolean(databaseUrl);
 
-export const db = drizzle(pool);
+const pool = databaseUrl
+  ? new Pool({
+      connectionString: databaseUrl,
+      ssl: {
+        rejectUnauthorized: true, // required for Neon
+      },
+    })
+  : null;
+
+export const db = pool ? drizzle(pool) : null;
