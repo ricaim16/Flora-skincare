@@ -1,18 +1,41 @@
 "use client";
 
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CircleUserRound, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/Button";
+import { LogoutButton } from "./auth/LogoutButton";
+
+type Session = {
+  id: number;
+  email: string;
+  name: string;
+  role: "customer" | "admin";
+} | null;
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [session, setSession] = useState<Session>(null);
 
   const navItems = [
     { label: "About", href: "/#about" },
     { label: "Services", href: "/#services" },
     { label: "Contact", href: "/#contact" },
   ];
+
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        const data = await response.json();
+        setSession(data.session ?? null);
+      } catch {
+        setSession(null);
+      }
+    }
+
+    loadSession();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 px-4 pt-4 sm:px-6">
@@ -45,9 +68,36 @@ export default function Header() {
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
-            <Button href="/book" size="sm">
-              Book Now
-            </Button>
+            {session?.role === "admin" ? (
+              <>
+                <Button href="/admin/dashboard" size="sm" variant="secondary">
+                  Dashboard
+                </Button>
+                <LogoutButton redirectTo="/" label="Logout" />
+              </>
+            ) : session?.role === "customer" ? (
+              <>
+                <div className="flex items-center gap-3 rounded-[1.1rem] border border-purple-200 bg-white/80 px-3 py-2">
+                  <CircleUserRound className="h-8 w-8 text-purple-600" />
+                  <div className="max-w-44">
+                    <div className="truncate text-sm font-semibold text-purple-950">
+                      {session.name}
+                    </div>
+                    <div className="truncate text-xs text-purple-500">{session.email}</div>
+                  </div>
+                </div>
+                <Button href="/book" size="sm">
+                  Book Now
+                </Button>
+                <LogoutButton redirectTo="/" label="Logout" variant="secondary" />
+              </>
+            ) : (
+              <>
+                <Button href="/signup" size="sm">
+                  Sign Up
+                </Button>
+              </>
+            )}
           </div>
 
           <button
@@ -72,9 +122,36 @@ export default function Header() {
                   {item.label}
                 </Link>
               ))}
-              <Button href="/book" size="sm">
-                Book Now
-              </Button>
+              {session?.role === "admin" ? (
+                <>
+                  <Button href="/admin/dashboard" size="sm" variant="secondary">
+                    Dashboard
+                  </Button>
+                  <LogoutButton redirectTo="/" label="Logout" />
+                </>
+              ) : session?.role === "customer" ? (
+                <>
+                  <div className="flex items-center gap-3 rounded-[1.1rem] border border-purple-200 bg-white/80 px-3 py-2">
+                    <CircleUserRound className="h-8 w-8 text-purple-600" />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-purple-950">
+                        {session.name}
+                      </div>
+                      <div className="truncate text-xs text-purple-500">{session.email}</div>
+                    </div>
+                  </div>
+                  <Button href="/book" size="sm">
+                    Book Now
+                  </Button>
+                  <LogoutButton redirectTo="/" label="Logout" variant="secondary" />
+                </>
+              ) : (
+                <>
+                  <Button href="/signup" size="sm">
+                    Sign Up
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         )}

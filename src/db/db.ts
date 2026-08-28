@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import dotenv from "dotenv";
 
-dotenv.config(); // Load .env variables
+dotenv.config({ quiet: true }); // Load .env variables
 
 const databaseUrl = process.env.NEON_DB_URL?.trim();
 

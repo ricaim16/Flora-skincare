@@ -1,16 +1,17 @@
+import { and, desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db, hasDatabase } from "../../../db/db";
-import { bookings, reports } from "../../../db/schema";
-import { eq, gte, lte, and } from "drizzle-orm";
+import { expenses, reports } from "../../../db/schema";
+import { getCurrentSession } from "../../../lib/auth";
+import { isMissingTableError } from "../../../lib/db-errors";
+import { fetchBookingAnalyticsRows } from "../../../lib/legacy-db";
 import {
-  startOfWeek,
-  startOfMonth,
-  startOfYear,
-  endOfWeek,
-  endOfMonth,
-  endOfYear,
-  parseISO,
-} from "date-fns";
+  getReportRange,
+  summarizeAppointmentStatusesForRange,
+  summarizeCompletedWorkForRange,
+  type ExpenseAnalyticsRecord,
+  type ReportPeriod,
+} from "../../../lib/reporting";
 
 export async function GET(req: Request) {
   try {
@@ -21,78 +22,108 @@ export async function GET(req: Request) {
       );
     }
 
-    const url = new URL(req.url);
-    const query = url.searchParams;
+    const session = await getCurrentSession();
 
-    // Get query params
-    const type = (query.get("type") as "weekly" | "monthly" | "yearly") || "weekly";
-    const dateStr = query.get("date") || new Date().toISOString().slice(0, 10);
-    const date = parseISO(dateStr);
-
-    // Determine start and end dates
-    let startDate: Date;
-    let endDate: Date;
-
-    if (type === "weekly") {
-      startDate = startOfWeek(date, { weekStartsOn: 1 });
-      endDate = endOfWeek(date, { weekStartsOn: 1 });
-    } else if (type === "monthly") {
-      startDate = startOfMonth(date);
-      endDate = endOfMonth(date);
-    } else {
-      startDate = startOfYear(date);
-      endDate = endOfYear(date);
+    if (!session || session.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Convert JS Date -> YYYY-MM-DD for Postgres
-    const startDateStr = startDate.toISOString().split("T")[0];
-    const endDateStr = endDate.toISOString().split("T")[0];
+    const url = new URL(req.url);
+    const type = (url.searchParams.get("type") as ReportPeriod) || "custom";
+    const anchorDate =
+      url.searchParams.get("date") || new Date().toISOString().slice(0, 10);
+    const startDateParam = url.searchParams.get("startDate");
+    const endDateParam = url.searchParams.get("endDate");
+    const range = getReportRange(type, anchorDate, startDateParam, endDateParam);
 
-    // ✅ Check for cached report
-    const cached = await db
+    const allBookings = await fetchBookingAnalyticsRows();
+    let allExpenses: ExpenseAnalyticsRecord[] = [];
+
+    try {
+      allExpenses = (await db.select().from(expenses)) as ExpenseAnalyticsRecord[];
+    } catch (error) {
+      if (!isMissingTableError(error)) {
+        throw error;
+      }
+    }
+
+    const workSummary = summarizeCompletedWorkForRange(
+      allBookings,
+      allExpenses,
+      range.startDate,
+      range.endDate
+    );
+    const statusSummary = summarizeAppointmentStatusesForRange(
+      allBookings,
+      range.startDate,
+      range.endDate
+    );
+    const startDate = range.startDate.toISOString().slice(0, 10);
+    const endDate = range.endDate.toISOString().slice(0, 10);
+
+    if (type !== "custom") {
+      const [existing] = await db
+        .select()
+        .from(reports)
+        .where(
+          and(
+            eq(reports.reportType, type),
+            eq(reports.startDate, startDate),
+            eq(reports.endDate, endDate)
+          )
+        )
+        .orderBy(desc(reports.id))
+        .limit(1);
+
+      if (existing) {
+        await db
+          .update(reports)
+          .set({
+            totalClients: statusSummary.total,
+            totalRevenueInCents: workSummary.netInCents,
+          })
+          .where(eq(reports.id, existing.id));
+      } else {
+        await db.insert(reports).values({
+          reportType: type,
+          totalClients: statusSummary.total,
+          totalRevenueInCents: workSummary.netInCents,
+          startDate,
+          endDate,
+        });
+      }
+    }
+
+    const history = await db
       .select()
       .from(reports)
-      .where(
-        and(
-          eq(reports.reportType, type),
-          eq(reports.startDate, startDateStr),
-          eq(reports.endDate, endDateStr)
-        )
-      );
+      .orderBy(desc(reports.createdAt), desc(reports.id))
+      .limit(20);
 
-    if (cached.length) {
-      return NextResponse.json({ report: cached[0] });
-    }
-
-    // ✅ Aggregate bookings
-    const allBookings = await db
-      .select()
-      .from(bookings)
-      .where(
-        and(
-          gte(bookings.appointmentDate, startDateStr),
-          lte(bookings.appointmentDate, endDateStr)
-        )
-      );
-
-    const totalClients = allBookings.length;
-    const totalRevenueInCents = allBookings.reduce((sum, b) => sum + b.priceAtBooking, 0);
-
-    // ✅ Cache the report
-    const [savedReport] = await db
-      .insert(reports)
-      .values({
+    return NextResponse.json({
+      report: {
         reportType: type,
-        totalClients,
-        totalRevenueInCents,
-        startDate: startDateStr,
-        endDate: endDateStr,
-      })
-      .returning();
-
-    return NextResponse.json({ report: savedReport });
-  } catch (error: any) {
-    console.error("GET /api/reports error:", error.message);
-    return NextResponse.json({ error: "Failed to fetch reports" }, { status: 500 });
+        totalAppointments: statusSummary.total,
+        completedAppointments: statusSummary.completed,
+        confirmedAppointments: statusSummary.confirmed,
+        pendingAppointments: statusSummary.pending,
+        cancelledAppointments: statusSummary.cancelled,
+        totalRevenueInCents: workSummary.revenueInCents,
+        totalExpensesInCents: workSummary.expenseInCents,
+        totalTipsInCents: workSummary.tipInCents,
+        netRevenueInCents: workSummary.netInCents,
+        startDate,
+        endDate,
+        rangeLabel: workSummary.rangeLabel,
+        generatedAt: new Date().toISOString(),
+      },
+      history,
+    });
+  } catch (error) {
+    console.error("GET /api/reports error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch reports" },
+      { status: 500 }
+    );
   }
 }

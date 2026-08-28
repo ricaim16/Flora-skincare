@@ -32,6 +32,21 @@ export const reportTypeEnum = pgEnum("report_type", [
   "yearly",
 ]);
 
+export const accountRoleEnum = pgEnum("account_role", [
+  "customer",
+  "admin",
+]);
+
+export const bookingSourceEnum = pgEnum("booking_source", [
+  "website",
+  "admin",
+]);
+
+export const expenseEntryTypeEnum = pgEnum("expense_entry_type", [
+  "expense",
+  "tip",
+]);
+
 /* ──────────────────────────────────────────────
    SERVICES
 ────────────────────────────────────────────── */
@@ -43,6 +58,10 @@ export const services = pgTable(
 
     name: text("name").notNull(),
     slug: text("slug").notNull(),
+    description: text("description")
+      .notNull()
+      .default("Personalized skincare treatment."),
+    imageUrl: text("image_url"),
 
     durationMinutes: integer("duration_minutes")
       .notNull()
@@ -54,14 +73,46 @@ export const services = pgTable(
       .notNull()
       .default(true),
 
+    isMembersOnly: boolean("is_members_only")
+      .notNull()
+      .default(false),
+
     createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (t) => ({
     slugUniqueIdx: uniqueIndex("services_slug_unique_idx").on(t.slug),
     activeIdx: index("services_active_idx").on(t.isActive),
+    membersOnlyIdx: index("services_members_only_idx").on(t.isMembersOnly),
   })
+);
+
+/* ──────────────────────────────────────────────
+   CUSTOMERS
+────────────────────────────────────────────── */
+
+export const customers = pgTable(
+  "customers",
+  {
+    id: serial("id").primaryKey(),
+
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    passwordHash: text("password_hash").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }
 );
 
 /* ──────────────────────────────────────────────
@@ -75,7 +126,11 @@ export const bookings = pgTable(
 
     // Client info
     name: text("name").notNull(),
+    email: text("email").notNull(),
     phoneNumber: text("phone_number").notNull(),
+    customerId: integer("customer_id").references(() => customers.id, {
+      onDelete: "set null",
+    }),
 
     serviceId: integer("service_id")
       .notNull()
@@ -90,6 +145,9 @@ export const bookings = pgTable(
       .default("pending"),
 
     notes: text("notes"),
+    bookingSource: bookingSourceEnum("booking_source")
+      .notNull()
+      .default("website"),
 
     emailSent: boolean("email_sent")
       .notNull()
@@ -111,14 +169,14 @@ export const bookings = pgTable(
       .defaultNow(),
   },
   (t) => ({
-    uniqueClientSlotIdx: uniqueIndex("bookings_unique_client_slot_idx").on(
-      t.phoneNumber,
+    uniqueSlotIdx: uniqueIndex("bookings_unique_slot_idx").on(
       t.appointmentDate,
       t.appointmentTime
     ),
 
     serviceIdx: index("bookings_service_idx").on(t.serviceId),
     statusIdx: index("bookings_status_idx").on(t.status),
+    customerIdx: index("bookings_customer_idx").on(t.customerId),
   })
 );
 
@@ -131,6 +189,7 @@ export const admins = pgTable(
   {
     id: serial("id").primaryKey(),
 
+    name: text("name").notNull().default("Manager"),
     email: text("email").notNull().unique(),
     passwordHash: text("password_hash").notNull(),
 
@@ -142,6 +201,61 @@ export const admins = pgTable(
       .notNull()
       .defaultNow(),
   }
+);
+
+/* ──────────────────────────────────────────────
+   PASSWORD RESET OTPS
+────────────────────────────────────────────── */
+
+export const passwordResetOtps = pgTable(
+  "password_reset_otps",
+  {
+    id: serial("id").primaryKey(),
+
+    email: text("email").notNull(),
+    accountType: accountRoleEnum("account_type").notNull(),
+    codeHash: text("code_hash").notNull(),
+
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    accountIdx: index("password_reset_otps_account_idx").on(
+      t.email,
+      t.accountType
+    ),
+    expiryIdx: index("password_reset_otps_expiry_idx").on(t.expiresAt),
+  })
+);
+
+/* ──────────────────────────────────────────────
+   EXPENSES / TIPS
+────────────────────────────────────────────── */
+
+export const expenses = pgTable(
+  "expenses",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    note: text("note"),
+    entryType: expenseEntryTypeEnum("entry_type").notNull(),
+    amountInCents: integer("amount_in_cents").notNull(),
+    entryDate: date("entry_date").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    dateIdx: index("expenses_entry_date_idx").on(t.entryDate),
+    typeIdx: index("expenses_entry_type_idx").on(t.entryType),
+  })
 );
 
 /* ──────────────────────────────────────────────
@@ -182,10 +296,18 @@ export const servicesRelations = relations(services, ({ many }) => ({
   bookings: many(bookings),
 }));
 
+export const customersRelations = relations(customers, ({ many }) => ({
+  bookings: many(bookings),
+}));
+
 export const bookingsRelations = relations(bookings, ({ one }) => ({
   service: one(services, {
     fields: [bookings.serviceId],
     references: [services.id],
+  }),
+  customer: one(customers, {
+    fields: [bookings.customerId],
+    references: [customers.id],
   }),
 }));
 
@@ -227,6 +349,6 @@ export const contacts = pgTable(
 ────────────────────────────────────────────── */
 
 // Optional: If you later want to relate contacts to admins who reply
-export const contactsRelations = relations(contacts, ({ one }) => ({
+export const contactsRelations = relations(contacts, () => ({
   // For example, assignedAdmin: one(admins, { fields: [contacts.assignedAdminId], references: [admins.id] })
 }));

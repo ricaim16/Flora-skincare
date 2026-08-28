@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db, hasDatabase } from "../../../../db/db";
 import { admins } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
-import jwt from "jsonwebtoken";
+import { getCurrentSession, getSessionFromAuthHeader } from "../../../../lib/auth";
 
 export async function GET(req: Request) {
   try {
@@ -14,34 +14,29 @@ export async function GET(req: Request) {
     }
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = (await getCurrentSession()) ?? getSessionFromAuthHeader(authHeader);
 
-    const token = authHeader.replace("Bearer ", "");
-    let payload: any;
-    try {
-      payload = jwt.verify(token, process.env.JWT_SECRET!);
-    } catch {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    if (!session || session.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Fetch admin profile
     const [admin] = await db
       .select({
         id: admins.id,
+        name: admins.name,
         email: admins.email,
       })
       .from(admins)
-      .where(eq(admins.id, payload.id));
+      .where(eq(admins.id, session.id));
 
     if (!admin) {
       return NextResponse.json({ error: "Admin not found" }, { status: 404 });
     }
 
     return NextResponse.json({ admin });
-  } catch (error: any) {
-    console.error("GET /api/admin/profile error:", error.message);
+  } catch (error) {
+    console.error("GET /api/admin/profile error:", error);
     return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });
   }
 }

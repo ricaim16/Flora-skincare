@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "../components/ui/Button";
@@ -11,8 +12,11 @@ interface Service {
   id: number;
   name: string;
   slug: string;
+  description: string;
+  imageUrl: string | null;
   durationMinutes: number;
   priceInCents: number;
+  isMembersOnly?: boolean;
 }
 
 export default function Services() {
@@ -20,6 +24,7 @@ export default function Services() {
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasExclusiveServices, setHasExclusiveServices] = useState(false);
   const router = useRouter();
   const serviceImages = [
     { match: ["chemical", "peel"], src: "/Chemical peel.jpg" },
@@ -44,7 +49,7 @@ export default function Services() {
       item.match.some((term) => search.includes(term))
     );
 
-    return match?.src ?? fallbackImages[index % fallbackImages.length];
+    return service.imageUrl || match?.src || fallbackImages[index % fallbackImages.length];
   };
 
   useEffect(() => {
@@ -58,6 +63,7 @@ export default function Services() {
         }
 
         setServices(data.services || []);
+        setHasExclusiveServices(Boolean(data.hasExclusiveServices));
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to fetch services";
@@ -133,7 +139,7 @@ export default function Services() {
                     {service.name}
                   </h3>
                   <CardDescription className="mt-2 text-sm leading-6">
-                    {service.durationMinutes} min session with a soft luxury finish and personalized skin attention.
+                    {service.description}
                   </CardDescription>
 
                   <div className="mt-4 flex items-center justify-between rounded-[1rem] bg-purple-50/90 px-4 py-2.5">
@@ -144,6 +150,12 @@ export default function Services() {
                       {(service.priceInCents / 100).toLocaleString()} ETB
                     </span>
                   </div>
+
+                  {service.isMembersOnly && (
+                    <div className="mt-3 rounded-full bg-amber-50 px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+                      Members only
+                    </div>
+                  )}
 
                   <div className="mt-4">
                     <Button
@@ -171,6 +183,26 @@ export default function Services() {
             >
               {showAll ? "Show Less" : "View All Services"}
             </Button>
+          </div>
+        )}
+
+        {hasExclusiveServices && (
+          <div className="mt-10 rounded-[1.6rem] border border-amber-200 bg-amber-50 px-6 py-5 text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700">
+              Member access
+            </p>
+            <p className="mt-2 text-base text-amber-900">
+              Create an account to view any additional member-only services.
+            </p>
+            <div className="mt-4 flex flex-col items-center gap-3">
+              <Button href="/signup">Sign Up</Button>
+              <Link
+                href="/login"
+                className="text-sm font-semibold text-amber-800 underline underline-offset-4"
+              >
+                Already have an account? Login
+              </Link>
+            </div>
           </div>
         )}
       </div>

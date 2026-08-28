@@ -1,7 +1,7 @@
 import { defineConfig } from "drizzle-kit";
 import dotenv from "dotenv";
 
-dotenv.config(); // load .env
+dotenv.config({ quiet: true }); // load .env
 
 const dbUrl = process.env.NEON_DB_URL?.trim();
 if (!dbUrl) {
@@ -13,7 +13,7 @@ export default defineConfig({
   schema: "./src/db/schema.ts",
   out: "./drizzle",
   dbCredentials: {
-    url: dbUrl, 
+    url: dbUrl,
   },
   verbose: true,
   strict: true,
