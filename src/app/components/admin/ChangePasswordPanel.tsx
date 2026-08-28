@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Toast } from "../ui/Toast";
 
 export function ChangePasswordPanel() {
+  const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -53,53 +55,69 @@ export function ChangePasswordPanel() {
   }
 
   return (
-    <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
-      <h1 className="text-3xl font-semibold text-purple-950">Change password</h1>
-      <p className="mt-2 text-sm text-purple-600">
-        Update the manager password here or use forgot password with OTP on the login page.
-      </p>
-
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-4 p-6 text-left"
+        aria-expanded={open}
+      >
         <div>
-          <label className="mb-2 block text-sm font-semibold text-purple-950">
-            Current password
-          </label>
-          <input
-            type="password"
-            value={form.currentPassword}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                currentPassword: event.target.value,
-              }))
-            }
-            required
-            className="w-full rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
-          />
+          <h1 className="text-xl font-semibold text-slate-900">Change password</h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Update the manager password here or use forgot password with OTP on the login page.
+          </p>
         </div>
+        <ChevronDown
+          className={`h-5 w-5 shrink-0 text-slate-400 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
 
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-purple-950">
-            New password
-          </label>
-          <input
-            type="password"
-            value={form.newPassword}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                newPassword: event.target.value,
-              }))
-            }
-            required
-            className="w-full rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
-          />
-        </div>
+      {open && (
+        <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Current password
+            </label>
+            <input
+              type="password"
+              value={form.currentPassword}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  currentPassword: event.target.value,
+                }))
+              }
+              required
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+            />
+          </div>
 
-        <Button type="submit" className="w-full" disabled={saving}>
-          {saving ? "Saving..." : "Update Password"}
-        </Button>
-      </form>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              New password
+            </label>
+            <input
+              type="password"
+              value={form.newPassword}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  newPassword: event.target.value,
+                }))
+              }
+              required
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+            />
+          </div>
+
+          <Button type="submit" variant="flat" className="w-full" disabled={saving}>
+            {saving ? "Saving..." : "Update Password"}
+          </Button>
+        </form>
+      )}
 
       {toast && (
         <Toast

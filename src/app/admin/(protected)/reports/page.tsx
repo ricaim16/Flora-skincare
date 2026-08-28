@@ -44,6 +44,7 @@ export default function AdminReportsPage() {
   const [report, setReport] = useState<GeneratedReport | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [page, setPage] = useState(1);
   const [toast, setToast] = useState<{
     type: "success" | "error";
@@ -108,19 +109,59 @@ export default function AdminReportsPage() {
     return `/api/admin/reports/pdf?${params.toString()}`;
   }, [anchorDate, endDate, rangeType, startDate]);
 
+  async function downloadPdf() {
+    setDownloadingPdf(true);
+
+    const attemptFetch = () => fetch(pdfHref, { cache: "no-store" });
+
+    try {
+      let response = await attemptFetch();
+
+      if (!response.ok) {
+        response = await attemptFetch();
+      }
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error || "Failed to download PDF report.");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `flora-${rangeType}-report.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setToast({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Failed to download PDF report.",
+      });
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
-        <h1 className="text-3xl font-semibold text-purple-950">Reports</h1>
-        <p className="mt-2 text-sm text-purple-600">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Reports
+        </p>
+        <h1 className="mt-2 text-xl font-semibold text-slate-900">Monthly totals and history</h1>
+        <p className="mt-2 text-sm text-slate-500">
           Choose weekly, monthly, yearly, or use custom from-to dates. After generating, the report appears in the table below.
         </p>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[0.24fr_0.22fr_0.22fr_0.22fr_0.1fr]">
+        <div className="mt-6 grid gap-4 lg:grid-cols-[0.22fr_0.2fr_0.2fr_0.2fr_0.18fr]">
           <select
             value={rangeType}
             onChange={(event) => setRangeType(event.target.value as RangeType)}
-            className="rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
           >
             <option value="custom">From - To</option>
             <option value="weekly">Weekly</option>
@@ -132,7 +173,7 @@ export default function AdminReportsPage() {
             type="date"
             value={anchorDate}
             onChange={(event) => setAnchorDate(event.target.value)}
-            className="rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
           />
 
           <input
@@ -140,7 +181,7 @@ export default function AdminReportsPage() {
             value={startDate}
             onChange={(event) => setStartDate(event.target.value)}
             disabled={rangeType !== "custom"}
-            className="rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100 disabled:opacity-50"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100 disabled:opacity-50"
           />
 
           <input
@@ -148,10 +189,10 @@ export default function AdminReportsPage() {
             value={endDate}
             onChange={(event) => setEndDate(event.target.value)}
             disabled={rangeType !== "custom"}
-            className="rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100 disabled:opacity-50"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100 disabled:opacity-50"
           />
 
-          <Button type="button" onClick={generateReport} disabled={loading}>
+          <Button type="button" variant="flat" onClick={generateReport} disabled={loading}>
             {loading ? "Generating..." : "Generate"}
           </Button>
         </div>
@@ -159,66 +200,68 @@ export default function AdminReportsPage() {
 
       {report && (
         <div className="grid gap-6 xl:grid-cols-[1fr_0.3fr]">
-          <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-[1.4rem] bg-purple-50 px-5 py-4">
-                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-500">
-                  Net
+              <div className="rounded-lg bg-purple-50 px-5 py-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-purple-600">
+                  Net money
                 </div>
-                <div className="mt-2 text-2xl font-semibold text-purple-950">
+                <div className="mt-2 text-lg font-semibold text-slate-900">
                   {(report.netRevenueInCents / 100).toLocaleString()} ETB
                 </div>
               </div>
-              <div className="rounded-[1.4rem] bg-emerald-50 px-5 py-4">
-                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
+              <div className="rounded-lg bg-emerald-50 px-5 py-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
                   Completed
                 </div>
-                <div className="mt-2 text-2xl font-semibold text-purple-950">
+                <div className="mt-2 text-lg font-semibold text-slate-900">
                   {report.completedAppointments}
                 </div>
               </div>
-              <div className="rounded-[1.4rem] bg-amber-50 px-5 py-4">
-                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-600">
+              <div className="rounded-lg bg-amber-50 px-5 py-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-amber-600">
                   Pending
                 </div>
-                <div className="mt-2 text-2xl font-semibold text-purple-950">
+                <div className="mt-2 text-lg font-semibold text-slate-900">
                   {report.pendingAppointments}
                 </div>
               </div>
-              <div className="rounded-[1.4rem] bg-rose-50 px-5 py-4">
-                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-600">
+              <div className="rounded-lg bg-rose-50 px-5 py-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-rose-600">
                   Cancelled
                 </div>
-                <div className="mt-2 text-2xl font-semibold text-purple-950">
+                <div className="mt-2 text-lg font-semibold text-slate-900">
                   {report.cancelledAppointments}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
-            <h2 className="text-xl font-semibold text-purple-950">Download PDF</h2>
-            <p className="mt-2 text-sm text-purple-600">{report.rangeLabel}</p>
-            <a
-              href={pdfHref}
-              className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-purple-700 via-fuchsia-600 to-purple-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(117,57,187,0.24)]"
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">Download PDF</h2>
+            <p className="mt-2 text-sm text-slate-500">{report.rangeLabel}</p>
+            <button
+              type="button"
+              onClick={downloadPdf}
+              disabled={downloadingPdf}
+              className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
             >
-              Download PDF
-            </a>
+              {downloadingPdf ? "Preparing..." : "Download PDF"}
+            </button>
           </div>
         </div>
       )}
 
-      <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
-        <h2 className="text-2xl font-semibold text-purple-950">Report table</h2>
-        <p className="mt-2 text-sm text-purple-600">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">Report history</h2>
+        <p className="mt-2 text-sm text-slate-500">
           The newest generated report appears first, followed by stored weekly, monthly, and yearly reports.
         </p>
 
         <div className="mt-6 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-purple-100 text-purple-500">
+              <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
                 <th className="px-3 py-3 font-semibold">Type</th>
                 <th className="px-3 py-3 font-semibold">From</th>
                 <th className="px-3 py-3 font-semibold">To</th>
@@ -228,24 +271,24 @@ export default function AdminReportsPage() {
             </thead>
             <tbody>
               {report && (
-                <tr className="border-b border-purple-50 bg-purple-50/60">
-                  <td className="px-3 py-3 font-semibold text-purple-950">{report.reportType}</td>
-                  <td className="px-3 py-3 text-purple-600">{report.startDate}</td>
-                  <td className="px-3 py-3 text-purple-600">{report.endDate}</td>
-                  <td className="px-3 py-3 text-purple-700">{report.totalAppointments}</td>
-                  <td className="px-3 py-3 text-purple-700">
+                <tr className="border-b border-slate-100 bg-purple-50/60">
+                  <td className="px-3 py-3 font-medium text-slate-900">{report.reportType}</td>
+                  <td className="px-3 py-3 text-slate-500">{report.startDate}</td>
+                  <td className="px-3 py-3 text-slate-500">{report.endDate}</td>
+                  <td className="px-3 py-3 text-slate-600">{report.totalAppointments}</td>
+                  <td className="px-3 py-3 text-slate-600">
                     {(report.netRevenueInCents / 100).toLocaleString()} ETB
                   </td>
                 </tr>
               )}
 
               {pagedHistory.map((row) => (
-                <tr key={row.id} className="border-b border-purple-50">
-                  <td className="px-3 py-3 font-semibold text-purple-950">{row.reportType}</td>
-                  <td className="px-3 py-3 text-purple-600">{row.startDate}</td>
-                  <td className="px-3 py-3 text-purple-600">{row.endDate}</td>
-                  <td className="px-3 py-3 text-purple-700">{row.totalClients}</td>
-                  <td className="px-3 py-3 text-purple-700">
+                <tr key={row.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-3 py-3 font-medium text-slate-900">{row.reportType}</td>
+                  <td className="px-3 py-3 text-slate-500">{row.startDate}</td>
+                  <td className="px-3 py-3 text-slate-500">{row.endDate}</td>
+                  <td className="px-3 py-3 text-slate-600">{row.totalClients}</td>
+                  <td className="px-3 py-3 text-slate-600">
                     {(row.totalRevenueInCents / 100).toLocaleString()} ETB
                   </td>
                 </tr>

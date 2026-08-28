@@ -87,7 +87,7 @@ export default function BookingForm() {
         const message =
           error instanceof Error ? error.message : "Failed to fetch services";
         console.error("Failed to fetch services:", message);
-        setServicesError(message);
+        setServicesError("We couldn't load our treatments right now. Please refresh or check back shortly.");
       } finally {
         setLoadingServices(false);
       }
@@ -273,7 +273,7 @@ export default function BookingForm() {
           <div className="mt-7">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-500">
-                Now we may help you?
+                Choose your treatment
               </h3>
               {selectedService && (
                 <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700">

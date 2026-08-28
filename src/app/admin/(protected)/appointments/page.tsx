@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CalendarPlus2, EllipsisVertical, Eye, ListTodo, Pencil, Trash2 } from "lucide-react";
 import { Pagination } from "../../../components/admin/Pagination";
 import { Button } from "../../../components/ui/Button";
 import { Toast } from "../../../components/ui/Toast";
@@ -28,11 +29,12 @@ type Appointment = {
 };
 
 const PAGE_SIZE = 6;
-const nextStatusMap: Record<AppointmentStatus, AppointmentStatus> = {
-  pending: "confirmed",
-  confirmed: "completed",
-  completed: "completed",
-  cancelled: "cancelled",
+
+const statusBadgeClasses: Record<AppointmentStatus, string> = {
+  pending: "bg-amber-50 text-amber-700",
+  confirmed: "bg-blue-50 text-blue-700",
+  completed: "bg-emerald-50 text-emerald-700",
+  cancelled: "bg-slate-100 text-slate-500",
 };
 
 const emptyForm = {
@@ -49,15 +51,15 @@ const emptyForm = {
 export default function AdminAppointmentsPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [statusDrafts, setStatusDrafts] = useState<Record<number, AppointmentStatus>>(
-    {}
-  );
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 10));
+  const [filterDate, setFilterDate] = useState("");
   const [toast, setToast] = useState<{
     type: "success" | "error";
     message: string;
@@ -85,14 +87,6 @@ export default function AdminAppointmentsPage() {
 
       setAppointments(appointmentsPayload.appointments);
       setServices(servicesPayload.services);
-      setStatusDrafts(
-        Object.fromEntries(
-          appointmentsPayload.appointments.map((appointment: Appointment) => [
-            appointment.id,
-            appointment.status,
-          ])
-        )
-      );
     } catch (error) {
       setToast({
         type: "error",
@@ -147,6 +141,7 @@ export default function AdminAppointmentsPage() {
       });
       setEditingId(null);
       setForm(emptyForm);
+      setShowForm(false);
       await loadPage();
     } catch (error) {
       setToast({
@@ -183,33 +178,11 @@ export default function AdminAppointmentsPage() {
     }
   }
 
-  async function updateStatus(id: number, status: AppointmentStatus) {
-    try {
-      const response = await fetch(`/api/admin/appointments/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status }),
-      });
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.error || "Failed to update status.");
-      }
-
-      setToast({ type: "success", message: "Status updated successfully." });
-      await loadPage();
-    } catch (error) {
-      setToast({
-        type: "error",
-        message: error instanceof Error ? error.message : "Failed to update status.",
-      });
-    }
-  }
-
   function editAppointment(appointment: Appointment) {
+    setOpenMenuId(null);
+    setSelectedAppointment(null);
     setEditingId(appointment.id);
+    setShowForm(true);
     setForm({
       name: appointment.name,
       email: appointment.email,
@@ -238,170 +211,73 @@ export default function AdminAppointmentsPage() {
 
   const stats = useMemo(
     () => ({
-      total: filteredAppointments.length,
-      pending: filteredAppointments.filter((item) => item.status === "pending").length,
+      total: appointments.length,
+      pending: appointments.filter((item) => item.status === "pending").length,
       today: appointments.filter((item) => item.appointmentDate === today).length,
     }),
-    [appointments, filteredAppointments, today]
+    [appointments, today]
   );
 
+  function openCreateForm() {
+    setOpenMenuId(null);
+    setSelectedAppointment(null);
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  }
+
+  function closeForm() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(false);
+  }
+
+  function openDetails(appointment: Appointment) {
+    setOpenMenuId(null);
+    setSelectedAppointment(appointment);
+  }
+
+  function closeDetails() {
+    setSelectedAppointment(null);
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-500">Total appointments</p>
-          <p className="mt-3 text-3xl font-semibold text-purple-950">{stats.total}</p>
-        </div>
-        <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-500">Pending</p>
-          <p className="mt-3 text-3xl font-semibold text-purple-950">{stats.pending}</p>
-        </div>
-        <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-500">Today</p>
-          <p className="mt-3 text-3xl font-semibold text-purple-950">{stats.today}</p>
-        </div>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
-          <h1 className="text-3xl font-semibold text-purple-950">
-            {editingId ? "Edit appointment" : "Add appointment"}
-          </h1>
-          <p className="mt-2 text-sm text-purple-600">
-            Confirm means accepted. Completed means the work is done and money counts.
-          </p>
-
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            {[
-              { label: "Customer name", key: "name" },
-              { label: "Email", key: "email", type: "email" },
-              { label: "Phone number", key: "phoneNumber" },
-            ].map((field) => (
-              <div key={field.key}>
-                <label className="mb-2 block text-sm font-semibold text-purple-950">
-                  {field.label}
-                </label>
-                <input
-                  type={field.type || "text"}
-                  value={form[field.key as keyof typeof form]}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      [field.key]: event.target.value,
-                    }))
-                  }
-                  required
-                  className="w-full rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
-                />
-              </div>
-            ))}
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-purple-950">Service</label>
-              <select
-                value={form.serviceId}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, serviceId: event.target.value }))
-                }
-                required
-                className="w-full rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
-              >
-                <option value="">Select a service</option>
-                {services.map((service) => (
-                  <option key={service.id} value={service.id}>
-                    {service.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-purple-950">Date</label>
-                <input
-                  type="date"
-                  value={form.appointmentDate}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, appointmentDate: event.target.value }))
-                  }
-                  required
-                  className="w-full rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-purple-950">Time</label>
-                <input
-                  type="time"
-                  value={form.appointmentTime}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, appointmentTime: event.target.value }))
-                  }
-                  required
-                  className="w-full rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-purple-950">Status</label>
-                <select
-                  value={form.status}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      status: event.target.value as AppointmentStatus,
-                    }))
-                  }
-                  className="w-full rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-purple-950">Notes</label>
-              <textarea
-                value={form.notes}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, notes: event.target.value }))
-                }
-                rows={4}
-                className="w-full rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
-              />
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Button type="submit" disabled={saving}>
-                {saving ? "Saving..." : editingId ? "Update Appointment" : "Add Appointment"}
-              </Button>
-              {editingId && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setEditingId(null);
-                    setForm(emptyForm);
-                  }}
-                >
-                  Cancel Edit
-                </Button>
-              )}
-            </div>
-          </form>
+    <>
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total appointments</p>
+            <p className="mt-3 text-2xl font-bold text-slate-900">{stats.total}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending</p>
+            <p className="mt-3 text-2xl font-bold text-slate-900">{stats.pending}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Today</p>
+            <p className="mt-3 text-2xl font-bold text-slate-900">{stats.today}</p>
+          </div>
         </div>
 
-        <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-purple-950">Appointment list</h2>
-              <p className="mt-2 text-sm text-purple-600">
-                Default filter is today. Use the date picker to see previous dates or clear it for all.
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                  <ListTodo className="h-4 w-4" />
+                </div>
+                <h2 className="text-lg font-semibold text-slate-900">Appointment list</h2>
+              </div>
+              <p className="mt-2 text-sm text-slate-500">
+                All appointments show by default. Use the date picker only if you want to filter.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
+              <Button type="button" variant="flat" onClick={openCreateForm}>
+                <CalendarPlus2 className="h-4 w-4" />
+                Add appointment
+              </Button>
               <input
                 type="date"
                 value={filterDate}
@@ -409,106 +285,130 @@ export default function AdminAppointmentsPage() {
                   setFilterDate(event.target.value);
                   setPage(1);
                 }}
-                className="rounded-[1.15rem] border border-purple-200 bg-white px-4 py-3 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
               />
-              <Button type="button" variant="secondary" onClick={() => setFilterDate("")}>
-                All dates
-              </Button>
             </div>
           </div>
 
           {loading ? (
-            <div className="mt-6 text-sm text-purple-600">Loading appointments...</div>
+            <div className="mt-6 text-sm text-slate-500">Loading appointments...</div>
           ) : (
             <>
-              <div className="mt-6 space-y-4">
-                {pagedAppointments.map((appointment) => (
-                  <div
-                    key={appointment.id}
-                    className="rounded-[1.4rem] border border-purple-100 bg-white px-5 py-4"
-                  >
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-lg font-semibold text-purple-950">{appointment.name}</h3>
-                            <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-purple-600">
+              <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200 bg-white lg:overflow-visible">
+                <table className="min-w-[720px] w-full table-fixed border-collapse lg:min-w-0">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-left">
+                      <th className="w-[20%] px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Name
+                      </th>
+                      <th className="w-[18%] px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Service
+                      </th>
+                      <th className="w-[22%] px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Schedule
+                      </th>
+                      <th className="w-[14%] px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Status
+                      </th>
+                      <th className="w-[12%] px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Price
+                      </th>
+                      <th className="w-[14%] px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedAppointments.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-10 text-center text-sm text-slate-500"
+                        >
+                          No appointments found for this date.
+                        </td>
+                      </tr>
+                    ) : (
+                      pagedAppointments.map((appointment) => (
+                        <tr
+                          key={appointment.id}
+                          className="border-b border-slate-100 align-top last:border-b-0 hover:bg-slate-50"
+                        >
+                          <td className="px-4 py-4">
+                            <div className="truncate text-sm font-medium text-slate-900">
+                              {appointment.name}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-slate-600">
+                            <div className="truncate">{appointment.serviceName || "Service"}</div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-slate-600">
+                            <div>{appointment.appointmentDate}</div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {appointment.appointmentTime}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusBadgeClasses[appointment.status]}`}
+                            >
                               {appointment.status}
                             </span>
-                            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-700">
-                              {appointment.bookingSource}
-                            </span>
-                          </div>
-                          <p className="text-sm text-purple-600">
-                            {appointment.serviceName} • {appointment.appointmentDate} • {appointment.appointmentTime}
-                          </p>
-                          <p className="text-sm text-purple-600">
-                            {appointment.email} • {appointment.phoneNumber}
-                          </p>
-                          {appointment.notes && (
-                            <p className="text-sm text-purple-500">Note: {appointment.notes}</p>
-                          )}
-                        </div>
+                          </td>
+                          <td className="px-4 py-4 text-sm font-semibold text-slate-900">
+                            {(appointment.priceAtBooking / 100).toLocaleString()} ETB
+                          </td>
+                          <td className="relative px-4 py-4">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenMenuId((current) =>
+                                  current === appointment.id ? null : appointment.id
+                                )
+                              }
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+                              aria-label={`Open actions for ${appointment.name}`}
+                            >
+                              <EllipsisVertical className="h-4 w-4" />
+                            </button>
 
-                        <div className="text-sm font-semibold text-purple-950">
-                          {(appointment.priceAtBooking / 100).toLocaleString()} ETB
-                        </div>
-                      </div>
-
-                      <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto_auto]">
-                        <select
-                          value={statusDrafts[appointment.id] ?? appointment.status}
-                          onChange={(event) =>
-                            setStatusDrafts((current) => ({
-                              ...current,
-                              [appointment.id]: event.target.value as AppointmentStatus,
-                            }))
-                          }
-                          className="rounded-[1rem] border border-purple-200 bg-white px-3 py-2 text-sm text-purple-950 focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-100"
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="confirmed">Confirmed</option>
-                          <option value="completed">Completed</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() =>
-                            updateStatus(
-                              appointment.id,
-                              statusDrafts[appointment.id] ?? appointment.status
-                            )
-                          }
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() =>
-                            updateStatus(
-                              appointment.id,
-                              nextStatusMap[statusDrafts[appointment.id] ?? appointment.status]
-                            )
-                          }
-                        >
-                          Next Status
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => editAppointment(appointment)}
-                        >
-                          Edit
-                        </Button>
-                        <Button type="button" onClick={() => deleteAppointment(appointment.id)}>
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                            {openMenuId === appointment.id ? (
+                              <div className="absolute right-0 top-11 z-10 min-w-[150px] rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg">
+                                <button
+                                  type="button"
+                                  onClick={() => openDetails(appointment)}
+                                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                >
+                                  <Eye className="h-4 w-4 text-slate-500" />
+                                  View
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => editAppointment(appointment)}
+                                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                >
+                                  <Pencil className="h-4 w-4 text-slate-500" />
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    deleteAppointment(appointment.id);
+                                  }}
+                                  className="flex w-full items-center gap-2.5 rounded-[0.8rem] px-3 py-2.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete
+                                </button>
+                              </div>
+                            ) : null}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
 
               <div className="mt-5">
@@ -519,6 +419,248 @@ export default function AdminAppointmentsPage() {
         </div>
       </div>
 
+      {showForm ? (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 py-8 sm:px-6">
+          <div className="max-h-[calc(100vh-4rem)] w-full max-w-3xl overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {editingId ? "Edit appointment" : "Add appointment"}
+                </h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  Confirm means accepted. Completed means the work is done and money counts.
+                </p>
+              </div>
+              <Button type="button" variant="flat-secondary" onClick={closeForm}>
+                Close
+              </Button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              {[
+                { label: "Customer name", key: "name" },
+                { label: "Email", key: "email", type: "email" },
+                { label: "Phone number", key: "phoneNumber" },
+              ].map((field) => (
+                <div key={field.key}>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    {field.label}
+                  </label>
+                  <input
+                    type={field.type || "text"}
+                    value={form[field.key as keyof typeof form]}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        [field.key]: event.target.value,
+                      }))
+                    }
+                    required={field.key !== "email"}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                  />
+                </div>
+              ))}
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Service
+                </label>
+                <select
+                  value={form.serviceId}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, serviceId: event.target.value }))
+                  }
+                  required
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                >
+                  <option value="">Select a service</option>
+                  {services.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={form.appointmentDate}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        appointmentDate: event.target.value,
+                      }))
+                    }
+                    required
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    value={form.appointmentTime}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        appointmentTime: event.target.value,
+                      }))
+                    }
+                    required
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Status
+                  </label>
+                  <select
+                    value={form.status}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        status: event.target.value as AppointmentStatus,
+                      }))
+                    }
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Notes</label>
+                <textarea
+                  value={form.notes}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, notes: event.target.value }))
+                  }
+                  rows={4}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Button type="submit" variant="flat" disabled={saving}>
+                  {saving ? "Saving..." : editingId ? "Update Appointment" : "Add Appointment"}
+                </Button>
+                <Button type="button" variant="flat-secondary" onClick={closeForm}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {selectedAppointment ? (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 py-8 sm:px-6">
+          <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">Appointment details</h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  Full information for this appointment.
+                </p>
+              </div>
+              <Button type="button" variant="flat-secondary" onClick={closeDetails}>
+                Close
+              </Button>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Name
+                </div>
+                <div className="mt-2 text-base font-semibold text-slate-900">
+                  {selectedAppointment.name}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Service
+                </div>
+                <div className="mt-2 text-base font-semibold text-slate-900">
+                  {selectedAppointment.serviceName || "Service"}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Schedule
+                </div>
+                <div className="mt-2 text-base font-semibold text-slate-900">
+                  {selectedAppointment.appointmentDate}
+                </div>
+                <div className="text-sm text-slate-500">
+                  {selectedAppointment.appointmentTime}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Price
+                </div>
+                <div className="mt-2 text-base font-semibold text-slate-900">
+                  {(selectedAppointment.priceAtBooking / 100).toLocaleString()} ETB
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Email
+                </div>
+                <div className="mt-2 text-base font-semibold text-slate-900">
+                  {selectedAppointment.email || "-"}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Phone
+                </div>
+                <div className="mt-2 text-base font-semibold text-slate-900">
+                  {selectedAppointment.phoneNumber}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Status
+                </div>
+                <div className="mt-2 text-base font-semibold capitalize text-slate-900">
+                  {selectedAppointment.status}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Source
+                </div>
+                <div className="mt-2 text-base font-semibold capitalize text-slate-900">
+                  {selectedAppointment.bookingSource}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Notes
+              </div>
+              <div className="mt-2 text-sm text-slate-600">
+                {selectedAppointment.notes || "No notes for this appointment."}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {toast && (
         <Toast
           message={toast.message}
@@ -526,6 +668,6 @@ export default function AdminAppointmentsPage() {
           onClose={() => setToast(null)}
         />
       )}
-    </div>
+    </>
   );
 }

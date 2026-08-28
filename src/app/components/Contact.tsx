@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Clock3,
-  Instagram,
-  Mail,
   MapPin,
-  Music2,
-  PhoneCall,
   Send,
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
@@ -84,11 +80,13 @@ export default function Contact() {
   };
 
   return (
-    <section id="contact" className="scroll-mt-28 px-4 py-20 sm:px-6 md:py-24">
+    <section
+      id="contact"
+      className="scroll-mt-28 px-4 pb-20 pt-8 sm:px-6 md:pb-24 md:pt-12"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <div className="section-kicker">Visit or message us</div>
-          <h2 className="section-heading mt-6 text-4xl text-purple-950 sm:text-5xl">
+          <h2 className="section-heading text-4xl text-purple-950 sm:text-5xl">
             Get in Touch
           </h2>
           <p className="section-copy mt-5 text-lg">
@@ -98,29 +96,7 @@ export default function Contact() {
 
         <div className="mt-12 grid items-start gap-5 lg:grid-cols-[0.98fr_1.02fr]">
           <div className="glass-panel rounded-[2rem] p-5 sm:p-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] bg-purple-50/90 p-5">
-                <PhoneCall className="h-5 w-5 text-purple-700" />
-                <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-purple-500">
-                  Call us
-                </p>
-                <a href={clinic.primaryPhoneHref} className="mt-2 block text-lg font-semibold text-purple-950">
-                  {clinic.primaryPhoneDisplay}
-                </a>
-              </div>
-
-              <div className="rounded-[1.5rem] bg-purple-50/90 p-5">
-                <Mail className="h-5 w-5 text-purple-700" />
-                <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-purple-500">
-                  Email
-                </p>
-                <a href={clinic.emailHref} className="mt-2 block text-lg font-semibold text-purple-950">
-                  {clinic.emailDisplay}
-                </a>
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-[1.5rem] bg-purple-950 p-5 text-white">
+            <div className="rounded-[1.5rem] bg-purple-950 p-5 text-white">
               <div className="flex items-start gap-4">
                 <MapPin className="mt-1 h-5 w-5 text-purple-200" />
                 <div>
@@ -154,27 +130,6 @@ export default function Contact() {
                   <p className="text-sm text-purple-700">9:00 AM to 6:00 PM</p>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a
-                href={clinic.instagramUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white px-4 py-3 text-sm font-semibold text-purple-950 transition hover:-translate-y-0.5 hover:border-purple-300"
-              >
-                <Instagram className="h-4 w-4" />
-                Instagram
-              </a>
-              <a
-                href={clinic.tiktokUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white px-4 py-3 text-sm font-semibold text-purple-950 transition hover:-translate-y-0.5 hover:border-purple-300"
-              >
-                <Music2 className="h-4 w-4" />
-                TikTok
-              </a>
             </div>
 
             <div className="map-frame mt-5 h-[220px] sm:h-[240px]">

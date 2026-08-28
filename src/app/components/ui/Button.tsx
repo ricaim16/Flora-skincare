@@ -5,7 +5,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "../../../lib/utils";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "flat" | "flat-secondary";
   size?: "sm" | "md" | "lg";
   href?: string;
   children: ReactNode;
@@ -28,7 +28,11 @@ export const Button = ({
         : "px-7 py-3.5 text-base",
     variant === "primary"
       ? "bg-gradient-to-r from-purple-700 via-fuchsia-600 to-purple-500 text-white shadow-[0_18px_34px_rgba(117,57,187,0.24)] hover:-translate-y-0.5 hover:shadow-[0_24px_40px_rgba(117,57,187,0.3)]"
-      : "border border-purple-200 bg-white/80 text-purple-900 shadow-[0_16px_30px_rgba(95,52,155,0.08)] backdrop-blur hover:-translate-y-0.5 hover:border-purple-300 hover:bg-white",
+      : variant === "secondary"
+        ? "border border-purple-200 bg-white/80 text-purple-900 shadow-[0_16px_30px_rgba(95,52,155,0.08)] backdrop-blur hover:-translate-y-0.5 hover:border-purple-300 hover:bg-white"
+        : variant === "flat"
+          ? "!rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+          : "!rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
     className,
   );
 

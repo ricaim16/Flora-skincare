@@ -4,6 +4,8 @@ import Contact from "../../components/Contact";
 
 export const metadata = {
   title: "Contact Flora Skincare",
+  description:
+    "Get in touch with Flora Skincare Clinic - find our Bole Road location, hours, and send us a message to plan your treatment.",
 };
 
 export default function ContactPage() {

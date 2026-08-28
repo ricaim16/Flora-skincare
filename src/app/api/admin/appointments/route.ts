@@ -68,7 +68,6 @@ export async function POST(req: Request) {
 
     if (
       !body.name ||
-      !email ||
       !body.phoneNumber ||
       !body.serviceId ||
       !body.appointmentDate ||

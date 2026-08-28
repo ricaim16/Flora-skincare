@@ -6,6 +6,8 @@ import BookingForm from "../../components/BookingForm";
 
 export const metadata = {
   title: "Book Appointment - Flora Skincare",
+  description:
+    "Book your appointment at Flora Skincare Clinic - choose a treatment, pick a date and time, and we'll confirm your visit.",
 };
 
 export default function BookPage() {

@@ -19,63 +19,65 @@
   --font-body: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  html {
+    scroll-behavior: smooth;
+  }
 
-body {
-  min-height: 100vh;
-  margin: 0;
-  color: var(--ink);
-  font-family: var(--font-body);
-  background:
-    radial-gradient(circle at 12% 18%, rgba(215, 175, 255, 0.75), transparent 24%),
-    radial-gradient(circle at 86% 12%, rgba(170, 129, 255, 0.26), transparent 22%),
-    radial-gradient(circle at 80% 78%, rgba(255, 212, 245, 0.45), transparent 28%),
-    linear-gradient(180deg, #fffafd 0%, #fbf7ff 38%, #f6efff 100%);
-  isolation: isolate;
-}
+  body {
+    min-height: 100vh;
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font-body);
+    background:
+      radial-gradient(circle at 12% 18%, rgba(215, 175, 255, 0.75), transparent 24%),
+      radial-gradient(circle at 86% 12%, rgba(170, 129, 255, 0.26), transparent 22%),
+      radial-gradient(circle at 80% 78%, rgba(255, 212, 245, 0.45), transparent 28%),
+      linear-gradient(180deg, #fffafd 0%, #fbf7ff 38%, #f6efff 100%);
+    isolation: isolate;
+  }
 
-body::before,
-body::after {
-  content: "";
-  position: fixed;
-  border-radius: 9999px;
-  filter: blur(72px);
-  pointer-events: none;
-  z-index: -1;
-}
+  body::before,
+  body::after {
+    content: "";
+    position: fixed;
+    border-radius: 9999px;
+    filter: blur(72px);
+    pointer-events: none;
+    z-index: -1;
+  }
 
-body::before {
-  top: 8%;
-  left: -8rem;
-  width: 20rem;
-  height: 20rem;
-  background: rgba(201, 135, 255, 0.25);
-  animation: drift 18s ease-in-out infinite alternate;
-}
+  body::before {
+    top: 8%;
+    left: -8rem;
+    width: 20rem;
+    height: 20rem;
+    background: rgba(201, 135, 255, 0.25);
+    animation: drift 18s ease-in-out infinite alternate;
+  }
 
-body::after {
-  right: -6rem;
-  bottom: 4%;
-  width: 18rem;
-  height: 18rem;
-  background: rgba(111, 57, 187, 0.18);
-  animation: drift 22s ease-in-out infinite alternate-reverse;
-}
+  body::after {
+    right: -6rem;
+    bottom: 4%;
+    width: 18rem;
+    height: 18rem;
+    background: rgba(111, 57, 187, 0.18);
+    animation: drift 22s ease-in-out infinite alternate-reverse;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-::selection {
-  background: rgba(149, 92, 223, 0.2);
-  color: var(--bg-deep);
+  ::selection {
+    background: rgba(149, 92, 223, 0.2);
+    color: var(--bg-deep);
+  }
 }
 
 .page-shell {

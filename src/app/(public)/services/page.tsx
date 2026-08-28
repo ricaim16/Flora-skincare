@@ -4,6 +4,8 @@ import Services from "../../components/Services";
 
 export const metadata = {
   title: "Services - Flora Skincare",
+  description:
+    "Explore Flora Skincare's signature treatments, including facials, chemical peels, microneedling, and dermaplaning in Addis Ababa.",
 };
 
 export default function ServicesPage() {

@@ -74,7 +74,20 @@ export async function GET() {
       monthlyRange.endDate
     );
 
-    const recentAppointments = (await fetchAdminAppointments()).slice(0, 8);
+    const recentAppointments = (
+      await fetchAdminAppointments()
+    )
+      .sort((left, right) => {
+        const leftDate = new Date(
+          `${left.appointmentDate}T${left.appointmentTime}`
+        ).getTime();
+        const rightDate = new Date(
+          `${right.appointmentDate}T${right.appointmentTime}`
+        ).getTime();
+
+        return rightDate - leftDate;
+      })
+      .slice(0, 8);
 
     return NextResponse.json({
       summary: {

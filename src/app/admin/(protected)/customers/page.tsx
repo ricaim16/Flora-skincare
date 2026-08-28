@@ -53,15 +53,15 @@ export default function AdminCustomersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
-        <h1 className="text-3xl font-semibold text-purple-950">Customers</h1>
-        <p className="mt-2 text-sm text-purple-600">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h1 className="text-xl font-semibold text-slate-900">Customers</h1>
+        <p className="mt-2 text-sm text-slate-500">
           Members and booking customers with total appointments and completed work history.
         </p>
       </div>
 
-      <div className="rounded-[1.8rem] border border-purple-100 bg-white/85 p-6 shadow-[0_22px_44px_rgba(72,29,116,0.08)]">
-        {loading && <div className="text-sm text-purple-600">Loading customers...</div>}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        {loading && <div className="text-sm text-slate-500">Loading customers...</div>}
         {error && <div className="text-sm text-rose-700">{error}</div>}
 
         {!loading && !error && (
@@ -69,7 +69,7 @@ export default function AdminCustomersPage() {
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-purple-100 text-purple-500">
+                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
                     <th className="px-3 py-3 font-semibold">Name</th>
                     <th className="px-3 py-3 font-semibold">Email</th>
                     <th className="px-3 py-3 font-semibold">Appointments</th>
@@ -79,12 +79,12 @@ export default function AdminCustomersPage() {
                 </thead>
                 <tbody>
                   {pagedCustomers.map((customer) => (
-                    <tr key={`${customer.email}-${customer.id ?? "guest"}`} className="border-b border-purple-50">
-                      <td className="px-3 py-3 font-semibold text-purple-950">{customer.name}</td>
-                      <td className="px-3 py-3 text-purple-600">{customer.email}</td>
-                      <td className="px-3 py-3 text-purple-700">{customer.totalAppointments}</td>
-                      <td className="px-3 py-3 text-purple-700">{customer.completedAppointments}</td>
-                      <td className="px-3 py-3 text-purple-700">
+                    <tr key={`${customer.email}-${customer.id ?? "guest"}`} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-3 py-3 font-medium text-slate-900">{customer.name}</td>
+                      <td className="px-3 py-3 text-slate-500">{customer.email}</td>
+                      <td className="px-3 py-3 text-slate-600">{customer.totalAppointments}</td>
+                      <td className="px-3 py-3 text-slate-600">{customer.completedAppointments}</td>
+                      <td className="px-3 py-3 text-slate-600">
                         {(customer.totalSpentInCents / 100).toLocaleString()} ETB
                       </td>
                     </tr>
