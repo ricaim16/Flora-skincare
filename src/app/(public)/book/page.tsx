@@ -14,7 +14,7 @@ export default function BookPage() {
   return (
     <div className="page-shell min-h-screen">
       <Header />
-      <main className="px-4 py-12 sm:px-6 sm:py-16">
+      <main className="px-4 py-8 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
             <div className="section-kicker mx-auto">
@@ -29,7 +29,7 @@ export default function BookPage() {
             </p>
           </div>
 
-          <div className="glass-panel mt-12 rounded-[2.2rem] p-5 sm:p-8">
+          <div className="glass-panel mt-8 rounded-[2.2rem] p-5 sm:mt-12 sm:p-8">
             <div className="mb-8 flex items-center gap-3 rounded-[1.4rem] bg-purple-50/90 px-4 py-4 text-purple-900">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-100 to-purple-200">
                 <Sparkles className="h-5 w-5" />

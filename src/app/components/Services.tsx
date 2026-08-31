@@ -76,7 +76,7 @@ export default function Services() {
 
   if (loading) {
     return (
-      <section id="services" className="scroll-mt-28 px-4 py-20 text-center sm:px-6 md:py-24">
+      <section id="services" className="scroll-mt-28 px-4 py-12 text-center sm:px-6 md:py-24">
         <p className="text-xl font-semibold text-purple-900">Loading services...</p>
       </section>
     );
@@ -84,7 +84,7 @@ export default function Services() {
 
   if (!services.length) {
     return (
-      <section id="services" className="scroll-mt-28 px-4 py-20 text-center sm:px-6 md:py-24">
+      <section id="services" className="scroll-mt-28 px-4 py-12 text-center sm:px-6 md:py-24">
         <p className="text-xl font-semibold text-purple-900">
           {error || "No services available at the moment."}
         </p>
@@ -95,7 +95,7 @@ export default function Services() {
   const displayServices = showAll ? services : services.slice(0, 4);
 
   return (
-    <section id="services" className="scroll-mt-28 px-4 py-20 sm:px-6 md:py-24">
+    <section id="services" className="scroll-mt-28 px-4 py-12 sm:px-6 md:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <div className="section-kicker">Signature treatments</div>

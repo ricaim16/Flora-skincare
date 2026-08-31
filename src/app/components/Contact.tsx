@@ -82,7 +82,7 @@ export default function Contact() {
   return (
     <section
       id="contact"
-      className="scroll-mt-28 px-4 pb-20 pt-8 sm:px-6 md:pb-24 md:pt-12"
+      className="scroll-mt-28 px-4 pb-12 pt-6 sm:px-6 md:pb-24 md:pt-12"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">

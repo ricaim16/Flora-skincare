@@ -18,7 +18,7 @@ export default function Hero({
   ctaLink = "/book",
 }: HeroProps) {
   return (
-    <section className="page-shell relative px-4 pb-12 pt-10 sm:px-6 sm:pb-20 sm:pt-14">
+    <section className="page-shell relative px-4 pb-8 pt-6 sm:px-6 sm:pb-20 sm:pt-14">
       <div className="ambient-orb left-[4%] top-28 h-20 w-20 bg-gradient-to-br from-fuchsia-200 to-purple-300" />
       <div className="ambient-orb right-[9%] top-36 h-16 w-16 bg-gradient-to-br from-purple-300 to-violet-400" />
       <div className="ambient-orb bottom-16 left-[48%] h-10 w-10 bg-gradient-to-br from-pink-200 to-fuchsia-300" />

@@ -23,7 +23,7 @@ export default function About() {
   ];
 
   return (
-    <section id="about" className="scroll-mt-28 px-4 py-16 sm:px-6 md:py-24">
+    <section id="about" className="scroll-mt-28 px-4 py-12 sm:px-6 md:py-24">
       <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
         <div className="grid items-center gap-14 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="relative order-2 flex items-center justify-center lg:order-1">
