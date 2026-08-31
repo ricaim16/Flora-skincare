@@ -4,6 +4,9 @@ A full-stack booking and clinic-management platform for a skincare studio — a 
 
 ## Features
 
+https://flora-skincare.vercel.app/
+https://flora-skincare.vercel.app/admin/login
+
 **Public site**
 - Home, About, Services, and Contact pages with a custom purple/glass visual design
 - Service catalog pulled live from the database
