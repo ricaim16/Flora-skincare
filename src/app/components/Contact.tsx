@@ -86,7 +86,7 @@ export default function Contact() {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="section-heading text-4xl text-purple-950 sm:text-5xl">
+          <h2 className="section-heading text-3xl text-purple-950 sm:text-5xl">
             Get in Touch
           </h2>
           <p className="section-copy mt-5 text-lg">

@@ -99,7 +99,7 @@ export default function Services() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <div className="section-kicker">Signature treatments</div>
-          <h2 className="section-heading mt-6 text-4xl text-purple-950 sm:text-5xl">
+          <h2 className="section-heading mt-6 text-3xl text-purple-950 sm:text-5xl">
             Our Signature Treatments
           </h2>
           <p className="section-copy mt-5 text-lg">

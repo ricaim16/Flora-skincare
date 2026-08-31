@@ -41,15 +41,15 @@ export default function Header() {
     <header className="sticky top-0 z-50 px-4 pt-4 sm:px-6">
       <div className="mx-auto max-w-7xl rounded-[1.75rem] border border-white/60 bg-white/70 shadow-[0_20px_50px_rgba(44,17,75,0.12)] backdrop-blur-xl">
         <div className="flex h-20 items-center justify-between px-5 sm:px-7">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-700 via-fuchsia-600 to-purple-400 text-xl font-bold text-white shadow-[0_16px_24px_rgba(118,66,183,0.24)]">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-700 via-fuchsia-600 to-purple-400 text-xl font-bold text-white shadow-[0_16px_24px_rgba(118,66,183,0.24)]">
               F
             </div>
-            <div>
-              <span className="block text-lg font-semibold tracking-tight text-purple-950">
+            <div className="min-w-0">
+              <span className="block truncate text-lg font-semibold tracking-tight text-purple-950">
                 Flora Skincare
               </span>
-              <span className="text-xs font-semibold uppercase tracking-[0.28em] text-purple-500">
+              <span className="hidden truncate text-xs font-semibold uppercase tracking-[0.28em] text-purple-500 sm:block">
                 Clinic & Glow Studio
               </span>
             </div>

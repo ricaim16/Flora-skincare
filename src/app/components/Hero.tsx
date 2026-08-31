@@ -25,7 +25,7 @@ export default function Hero({
 
       <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.04fr_0.96fr]">
         <div className="max-w-2xl">
-          <h1 className="section-heading fade-up mt-6 text-5xl text-purple-950 sm:text-6xl lg:text-7xl">
+          <h1 className="section-heading fade-up mt-6 text-4xl text-purple-950 sm:text-6xl lg:text-7xl">
             {title}
           </h1>
 

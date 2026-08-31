@@ -53,7 +53,7 @@ export default function About() {
 
           <div className="order-1 lg:order-2">
             <div className="section-kicker">About the clinic</div>
-            <h2 className="section-heading mt-6 text-4xl text-purple-950 sm:text-5xl">
+            <h2 className="section-heading mt-6 text-3xl text-purple-950 sm:text-5xl">
               Thoughtful treatments that feel luxurious and personal.
             </h2>
             <p className="section-copy mt-6 text-lg">

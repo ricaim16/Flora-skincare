@@ -21,7 +21,7 @@ export default function BookPage() {
               <CalendarDays className="h-4 w-4" />
               Appointment booking
             </div>
-            <h1 className="section-heading mt-6 text-5xl text-purple-950 sm:text-6xl">
+            <h1 className="section-heading mt-6 text-4xl text-purple-950 sm:text-6xl">
               Book Appointment
             </h1>
             <p className="section-copy mt-5 text-lg">
